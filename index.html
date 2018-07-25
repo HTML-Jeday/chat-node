@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chat</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="namesWrapper">
+            <h2>Realtime Chat</h2>
+            <p>Create Username: </p>
+            <div id="error"></div>    
+            <form  id="usernameForm">
+                <input type="text" id="username" size="35">
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+        <div id="mainWrapper">
+            <h2>Realtime Chat</h2>
+            <div id="chatWrapper">
+                <div id="chatWindow"></div>
+                <form  id="messageForm">
+                    <input type="text" id="message" size="35" placeholder="Say something....">
+                    <input type="submit" value="Submit">
+                </form>
+            </div>
+            <div id="userWrapper">
+                <div id="users"></div>
+            </div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io.connect();
+        const messageForm = document.querySelector('#messageForm');
+        const message = document.querySelector('#message');
+        const chat = document.querySelector('#chatWindow');
+        const namesWrapper = document.querySelector('#namesWrapper');
+        const mainWrapper = document.querySelector('#mainWrapper');
+        const usernameForm = document.querySelector('#usernameForm');
+        const users = document.querySelector('#users');
+        const username = document.querySelector('#username');
+        const error = document.querySelector('#error');
+
+        messageForm.addEventListener('submit', submitForm);
+        usernameForm.addEventListener('submit', usernameSubmit);
+
+
+        function usernameSubmit(e){
+            e.preventDefault();
+            socket.emit('new user', username.value, (data)=>{
+                if(data) {
+                    console.log('data is ready');
+               
+                    namesWrapper.style.display = 'none';
+                    mainWrapper.style.display = 'block';
+                }else{
+                    console.log('data is empty');
+                    error.innerHTML = 'Username is taken';
+                }
+
+            })
+        }
+
+        socket.on('usernames', (data)=>{
+           
+            let html = ''
+
+            data.forEach((item)=>{
+            
+                html += `<li>${item}</li>`
+             
+            })
+            users.innerHTML = html;
+            
+
+        })
+
+        function submitForm(e){
+            e.preventDefault();
+            socket.emit('send message', message.value );
+            message.value = '';
+        }
+
+        socket.on('new message', (data)=> {
+        
+           const li = document.createElement('li');
+           li.innerHTML = `<strong>${data.user}</strong>: ${data.msg}`;
+           chat.appendChild(li)
+        });
+
+
+
+
+    </script>
+</body>
+</html>
